@@ -1,9 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class Calculator extends JFrame implements ActionListener {
-
     private JTextField display;
     private String currentInput = "0";
     private String operator = "";
@@ -11,9 +11,10 @@ public class Calculator extends JFrame implements ActionListener {
     private boolean startNewInput = true;
 
     public Calculator() {
+        // 窗口基础配置（精简合并）
         setTitle("Calculator");
         setSize(500, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -21,8 +22,9 @@ public class Calculator extends JFrame implements ActionListener {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.LIGHT_GRAY);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        add(mainPanel);
 
-        // 显示屏（白色背景，自适应字体大小）
+        // 显示屏（保留所有原样式）
         display = new JTextField("0");
         display.setFont(new Font("Segoe UI", Font.PLAIN, 70));
         display.setHorizontalAlignment(JTextField.RIGHT);
@@ -31,7 +33,7 @@ public class Calculator extends JFrame implements ActionListener {
         display.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         mainPanel.add(display, BorderLayout.NORTH);
 
-        // 按钮面板
+        // 按钮面板（精简GridBagConstraints初始化）
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         buttonPanel.setBackground(Color.LIGHT_GRAY);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -39,70 +41,30 @@ public class Calculator extends JFrame implements ActionListener {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.weightx = 1;
         gbc.weighty = 1;
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
 
-        // 第一行：MC MR MS M+ M-（绿色边框）
-        String[] row1 = {"MC", "MR", "MS", "M+", "M-"};
-        gbc.gridy = 0;
-        for (int i = 0; i < 5; i++) {
-            gbc.gridx = i;
-            gbc.gridwidth = 1;
-            JButton btn = createButton(row1[i], Color.WHITE, Color.BLACK, Color.GREEN);
-            buttonPanel.add(btn, gbc);
-        }
-
-        // 第二行：CLR DEL ± % ÷（前四个绿色，最后一个橙色）
-        String[] row2 = {"CLR", "DEL", "±", "%", "÷"};
-        gbc.gridy = 1;
-        for (int i = 0; i < 5; i++) {
-            gbc.gridx = i;
-            gbc.gridwidth = 1;
-            Color borderColor = (i == 4) ? Color.ORANGE : Color.GREEN;
-            Color fgColor = (i == 4) ? Color.RED : Color.BLACK;
-            JButton btn = createButton(row2[i], Color.WHITE, fgColor, borderColor);
-            buttonPanel.add(btn, gbc);
-        }
-
-        // 第三行：7 8 9 ×（前三个红色，最后一个橙色）
-        gbc.gridy = 2;
-        addButton(buttonPanel, gbc, 0, "7", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 1, "8", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 2, "9", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 3, "×", Color.WHITE, Color.RED, Color.ORANGE);
-
-        // 第四行：4 5 6 -（前三个红色，最后一个橙色）
-        gbc.gridy = 3;
-        addButton(buttonPanel, gbc, 0, "4", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 1, "5", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 2, "6", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 3, "-", Color.WHITE, Color.RED, Color.ORANGE);
-
-        // 第五行：1 2 3 +（前三个红色，最后一个橙色）
-        gbc.gridy = 4;
-        addButton(buttonPanel, gbc, 0, "1", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 1, "2", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 2, "3", Color.WHITE, Color.BLACK, Color.RED);
-        addButton(buttonPanel, gbc, 3, "+", Color.WHITE, Color.RED, Color.ORANGE);
-
-        // 第六行：0 . =（0红色，.红色，=蓝色）
+        // 批量添加按钮（合并重复循环，删除冗余addButton方法）
+        addButtonRow(buttonPanel, gbc, 0, new String[]{"MC", "MR", "MS", "M+", "M-"},
+                Color.WHITE, Color.BLACK, Color.GREEN);
+        // 第二行特殊样式：前4绿，最后1橙红
+        addButtonRow(buttonPanel, gbc, 1, new String[]{"CLR", "DEL", "±", "%"},
+                Color.WHITE, Color.BLACK, Color.GREEN);
+        addSingleButton(buttonPanel, gbc, 1, 4, "÷", Color.WHITE, Color.RED, Color.ORANGE);
+        // 数字+运算键行（3数字+1运算）
+        addNumOpRow(buttonPanel, gbc, 2, "789", "×");
+        addNumOpRow(buttonPanel, gbc, 3, "456", "-");
+        addNumOpRow(buttonPanel, gbc, 4, "123", "+");
+        // 最后一行（0占两格、.、=）
         gbc.gridy = 5;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
-        JButton zeroBtn = createButton("0", Color.WHITE, Color.BLACK, Color.RED);
-        buttonPanel.add(zeroBtn, gbc);
-
-        gbc.gridx = 2;
+        addSingleButton(buttonPanel, gbc, 5, 0, "0", Color.WHITE, Color.BLACK, Color.RED);
         gbc.gridwidth = 1;
-        JButton dotBtn = createButton(".", Color.WHITE, Color.BLACK, Color.RED);
-        buttonPanel.add(dotBtn, gbc);
-
-        gbc.gridx = 3;
-        JButton equalBtn = createButton("=", Color.WHITE, Color.BLUE, Color.BLUE);
-        buttonPanel.add(equalBtn, gbc);
-
-        mainPanel.add(buttonPanel, BorderLayout.CENTER);
-        add(mainPanel);
+        addSingleButton(buttonPanel, gbc, 5, 2, ".", Color.WHITE, Color.BLACK, Color.RED);
+        addSingleButton(buttonPanel, gbc, 5, 3, "=", Color.WHITE, Color.BLUE, Color.BLUE);
     }
 
+    // 统一创建按钮（保留原样式）
     private JButton createButton(String text, Color bg, Color fg, Color border) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 36));
@@ -114,120 +76,116 @@ public class Calculator extends JFrame implements ActionListener {
         return btn;
     }
 
-    private void addButton(JPanel panel, GridBagConstraints gbc, int x, String text, Color bg, Color fg, Color border) {
-        gbc.gridx = x;
-        gbc.gridwidth = 1;
-        JButton btn = createButton(text, bg, fg, border);
-        panel.add(btn, gbc);
+    // 批量添加单行同样式按钮
+    private void addButtonRow(JPanel panel, GridBagConstraints gbc, int y, String[] texts, Color bg, Color fg, Color border) {
+        gbc.gridy = y;
+        for (int i = 0; i < texts.length; i++) {
+            gbc.gridx = i;
+            panel.add(createButton(texts[i], bg, fg, border), gbc);
+        }
     }
 
-    // 自适应字体大小，确保数字全部显示
-    private void adjustFontSize() {
-        String text = display.getText();
-        int textLength = text.length();
-        int baseSize = 70;
+    // 添加单个按钮
+    private void addSingleButton(JPanel panel, GridBagConstraints gbc, int y, int x, String text, Color bg, Color fg, Color border) {
+        gbc.gridy = y;
+        gbc.gridx = x;
+        panel.add(createButton(text, bg, fg, border), gbc);
+    }
 
-        if (textLength > 8) {
-            display.setFont(new Font("Segoe UI", Font.PLAIN, baseSize - (textLength - 8) * 5));
-        } else {
-            display.setFont(new Font("Segoe UI", Font.PLAIN, baseSize));
+    // 批量添加数字+运算键行（适配3数字+1运算的固定样式）
+    private void addNumOpRow(JPanel panel, GridBagConstraints gbc, int y, String nums, String op) {
+        gbc.gridy = y;
+        // 添加3个数字键
+        for (int i = 0; i < 3; i++) {
+            gbc.gridx = i;
+            panel.add(createButton(nums.charAt(i) + "", Color.WHITE, Color.BLACK, Color.RED), gbc);
         }
+        // 添加运算键
+        gbc.gridx = 3;
+        panel.add(createButton(op, Color.WHITE, Color.RED, Color.ORANGE), gbc);
+    }
+
+    // 自适应字体（保留原逻辑）
+    private void adjustFontSize() {
+        int len = display.getText().length();
+        display.setFont(new Font("Segoe UI", Font.PLAIN, len > 8 ? 70 - (len - 8) * 5 : 70));
+    }
+
+    // 抽离重复的数字格式化逻辑（去掉.0，简化多处重复代码）
+    private String formatNum(double num) {
+        String s = String.valueOf(num);
+        return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
-
+        // 数字输入
         if (cmd.matches("\\d")) {
-            if (startNewInput) {
-                currentInput = cmd;
-                startNewInput = false;
-            } else {
-                currentInput += cmd;
-            }
-            display.setText(currentInput);
-            adjustFontSize(); // 调整字体
-        } else if (cmd.equals(".")) {
-            if (startNewInput) {
-                currentInput = "0.";
-                startNewInput = false;
-            } else if (!currentInput.contains(".")) {
-                currentInput += ".";
-            }
-            display.setText(currentInput);
-            adjustFontSize();
-        } else if (cmd.equals("CLR")) {
+            currentInput = startNewInput ? cmd : currentInput + cmd;
+            startNewInput = false;
+        }
+        // 小数点
+        else if (cmd.equals(".")) {
+            currentInput = startNewInput ? "0." : (currentInput.contains(".") ? currentInput : currentInput + ".");
+            startNewInput = false;
+        }
+        // 清空
+        else if (cmd.equals("CLR")) {
             currentInput = "0";
             operator = "";
             firstNumber = 0;
             startNewInput = true;
-            display.setText(currentInput);
-            adjustFontSize();
-        } else if (cmd.equals("DEL")) {
-            if (currentInput.length() > 1) {
-                currentInput = currentInput.substring(0, currentInput.length() - 1);
-            } else {
-                currentInput = "0";
-            }
-            display.setText(currentInput);
-            adjustFontSize();
-        } else if (cmd.equals("±")) {
-            double num = Double.parseDouble(currentInput);
-            num = -num;
-            currentInput = String.valueOf(num);
-            if (currentInput.endsWith(".0")) {
-                currentInput = currentInput.substring(0, currentInput.length() - 2);
-            }
-            display.setText(currentInput);
-            adjustFontSize();
-        } else if (cmd.equals("%")) {
-            double num = Double.parseDouble(currentInput);
-            num /= 100;
-            currentInput = String.valueOf(num);
-            if (currentInput.endsWith(".0")) {
-                currentInput = currentInput.substring(0, currentInput.length() - 2);
-            }
-            display.setText(currentInput);
-            adjustFontSize();
-        } else if (cmd.matches("[+\\-×÷]")) {
+        }
+        // 删除
+        else if (cmd.equals("DEL")) {
+            currentInput = currentInput.length() > 1 ? currentInput.substring(0, currentInput.length() - 1) : "0";
+        }
+        // 正负号
+        else if (cmd.equals("±")) {
+            currentInput = formatNum(-Double.parseDouble(currentInput));
+        }
+        // 百分号
+        else if (cmd.equals("%")) {
+            currentInput = formatNum(Double.parseDouble(currentInput) / 100);
+        }
+        // 运算符
+        else if (cmd.matches("[+\\-×÷]")) {
             firstNumber = Double.parseDouble(currentInput);
             operator = cmd;
             startNewInput = true;
-        } else if (cmd.equals("=")) {
-            double secondNumber = Double.parseDouble(currentInput);
+            return; // 无需更新显示
+        }
+        // 等号计算
+        else if (cmd.equals("=")) {
+            double second = Double.parseDouble(currentInput);
             double result = 0;
-
             switch (operator) {
-                case "+": result = firstNumber + secondNumber; break;
-                case "-": result = firstNumber - secondNumber; break;
-                case "×": result = firstNumber * secondNumber; break;
+                case "+": result = firstNumber + second; break;
+                case "-": result = firstNumber - second; break;
+                case "×": result = firstNumber * second; break;
                 case "÷":
-                    if (secondNumber != 0) {
-                        result = firstNumber / secondNumber;
-                    } else {
+                    if (second == 0) {
                         display.setText("Error");
                         adjustFontSize();
                         return;
                     }
+                    result = firstNumber / second;
                     break;
             }
-
-            // 格式化结果，去掉多余的 .0
-            currentInput = String.valueOf(result);
-            if (currentInput.endsWith(".0")) {
-                currentInput = currentInput.substring(0, currentInput.length() - 2);
-            }
-            display.setText(currentInput);
-            adjustFontSize(); // 计算后调整字体
+            currentInput = formatNum(result);
             startNewInput = true;
         }
+        // 统一更新显示+调整字体（避免多处重复调用）
+        display.setText(currentInput);
+        adjustFontSize();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new Calculator().setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new Calculator().setVisible(true));
     }
 }
+
+
 
 
